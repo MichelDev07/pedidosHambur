@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PlusCircle, Minus, Plus, Ticket, Check, MapPin, User, Phone } from 'lucide-react';
+import { PlusCircle, Minus, Plus, MapPin, User, Phone } from 'lucide-react';
 import { PRECIO_HAMBURGUESA_GS } from '../data/initialData';
 
 export const OrderForm = ({ onSubmit, isSubmitting }) => {
@@ -26,7 +26,6 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
       estado_pago: estadoPago
     });
 
-    // Resetear formulario manteniendo foco
     setNombre('');
     setCantidad(1);
     setDireccion('');
@@ -37,13 +36,13 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
     <div className="order-form-card">
       <div className="order-form-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-          <div className="brand-icon-wrapper" style={{ width: '38px', height: '38px', fontSize: '1.25rem' }}>
+          <div className="brand-icon-wrapper" style={{ width: '40px', height: '40px', fontSize: '1.3rem' }}>
             🍔
           </div>
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Cargar Pedido de Hamburguesas</h3>
-            <span style={{ fontSize: '0.82rem', color: 'var(--amber-light)', fontWeight: 600 }}>
-              Precio oficial: {PRECIO_HAMBURGUESA_GS.toLocaleString('es-PY')} Gs. c/u (Incluye rifa)
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>Cargar Pedido de Hamburguesa</h3>
+            <span style={{ fontSize: '0.82rem', color: 'var(--amber-light)', fontWeight: 700 }}>
+              Precio: {PRECIO_HAMBURGUESA_GS.toLocaleString('es-PY')} Gs. por unidad
             </span>
           </div>
         </div>
@@ -71,7 +70,7 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
           {/* Cantidad de Hamburguesas */}
           <div className="form-group" style={{ gridColumn: 'span 2' }}>
             <label className="form-label">
-              ¿Cuántas hamburguesas pidió? <span className="req">*</span>
+              ¿Cuántos pedidos hizo? (Cantidad de hamburguesas) <span className="req">*</span>
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
               <div className="qty-control" style={{ padding: '0.35rem 0.6rem' }}>
@@ -121,7 +120,7 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
             </div>
           </div>
 
-          {/* Dirección (Opcional) */}
+          {/* Dirección donde vive (Opcional) */}
           <div className="form-group">
             <label className="form-label">
               <MapPin size={15} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
@@ -169,7 +168,7 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
                   <div className="radio-label-title" style={{ color: 'var(--green-light)' }}>
                     ✅ Ya Pagó
                   </div>
-                  <div className="radio-label-sub">Dinero recibido</div>
+                  <div className="radio-label-sub">Dinero cobrado</div>
                 </div>
               </div>
 
@@ -185,9 +184,9 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
                 />
                 <div>
                   <div className="radio-label-title" style={{ color: 'var(--amber-light)' }}>
-                    ⏳ Pendiente de Pago
+                    ⏳ Pendiente
                   </div>
-                  <div className="radio-label-sub">A cobrar luego</div>
+                  <div className="radio-label-sub">A cobrar</div>
                 </div>
               </div>
             </div>
@@ -197,11 +196,10 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
         {/* Resumen del cálculo y Botón de Envío */}
         <div className="order-form-footer">
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--green-light)', fontWeight: 700 }}>
-              <Ticket size={16} />
-              <span>Suma {cantidad} {cantidad === 1 ? 'número' : 'números'} de rifa</span>
-            </div>
-            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--amber-light)' }}>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              {cantidad} {cantidad === 1 ? 'hamburguesa' : 'hamburguesas'} × {PRECIO_HAMBURGUESA_GS.toLocaleString('es-PY')} Gs.
+            </span>
+            <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--amber-light)' }}>
               Total: {total.toLocaleString('es-PY')} Gs.
             </div>
           </div>
@@ -213,7 +211,7 @@ export const OrderForm = ({ onSubmit, isSubmitting }) => {
             style={{ padding: '0.85rem 1.6rem' }}
           >
             <PlusCircle size={18} />
-            <span>{isSubmitting ? 'Guardando...' : `Cargar Pedido (${total.toLocaleString('es-PY')} Gs.)`}</span>
+            <span>{isSubmitting ? 'Guardando...' : `Registrar Pedido (${total.toLocaleString('es-PY')} Gs.)`}</span>
           </button>
         </div>
       </form>

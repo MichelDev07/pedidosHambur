@@ -15,7 +15,7 @@ export const Navbar = ({
             🍔
           </div>
           <div className="brand-text">
-            <h1>Rifa Solidaria - Hamburguesas</h1>
+            <h1>Hamburgueseada Solidaria</h1>
             <span className="brand-badge">
               <Heart size={11} fill="currentColor" /> {PRECIO_HAMBURGUESA_GS.toLocaleString('es-PY')} Gs. c/u
             </span>

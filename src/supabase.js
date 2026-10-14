@@ -4,8 +4,7 @@ import { PRECIO_HAMBURGUESA_GS } from './data/initialData';
 const STORAGE_KEYS = {
   SUPABASE_URL: 'solidaria_supabase_url',
   SUPABASE_KEY: 'solidaria_supabase_anon_key',
-  PEDIDOS_LOCAL: 'solidaria_pedidos_cache',
-  ULTIMO_NUMERO_RIFA: 'solidaria_last_raffle_num'
+  PEDIDOS_LOCAL: 'solidaria_pedidos_cache'
 };
 
 export const getActiveCredentials = () => {
@@ -88,63 +87,12 @@ export const testSupabaseConnection = async () => {
   }
 };
 
-// Generar números de rifa correlativos (1 por cada hamburguesa pedida)
-export const getNextRaffleNumbers = async (cantidad = 1) => {
-  if (cantidad <= 0) return [];
-
-  const client = getSupabaseClient();
-  let baseNumber = 1;
-
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from('rifa_numeros')
-        .select('numero')
-        .order('numero', { ascending: false })
-        .limit(1);
-
-      if (!error && data && data.length > 0 && data[0].numero) {
-        baseNumber = data[0].numero + 1;
-      } else {
-        const { data: pedidosData } = await client
-          .from('pedidos')
-          .select('numeros_rifa');
-        if (pedidosData && pedidosData.length > 0) {
-          const allNums = pedidosData.flatMap(p => p.numeros_rifa || []);
-          if (allNums.length > 0) {
-            baseNumber = Math.max(...allNums) + 1;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('Fallback a conteo local:', e);
-    }
-  }
-
-  // Backup en localStorage
-  const localLast = parseInt(localStorage.getItem(STORAGE_KEYS.ULTIMO_NUMERO_RIFA) || '0', 10);
-  if (localLast >= baseNumber) {
-    baseNumber = localLast + 1;
-  }
-
-  const generated = [];
-  for (let i = 0; i < cantidad; i++) {
-    generated.push(baseNumber + i);
-  }
-
-  localStorage.setItem(STORAGE_KEYS.ULTIMO_NUMERO_RIFA, String(baseNumber + cantidad - 1));
-  return generated;
-};
-
-// Guardar nuevo pedido
+// Guardar pedido
 export const savePedido = async ({ cliente_nombre, cantidad, direccion = '', telefono = '', estado_pago = 'pendiente' }) => {
   const client = getSupabaseClient();
   const timestamp = new Date().toISOString();
   const cant = Math.max(1, parseInt(cantidad, 10) || 1);
   const total = cant * PRECIO_HAMBURGUESA_GS;
-
-  // 1 número de rifa por cada hamburguesa
-  const numerosRifa = await getNextRaffleNumbers(cant);
 
   const newPedido = {
     cliente_nombre: cliente_nombre.trim(),
@@ -153,7 +101,6 @@ export const savePedido = async ({ cliente_nombre, cantidad, direccion = '', tel
     total: total,
     direccion: direccion ? direccion.trim() : '',
     telefono: telefono ? telefono.trim() : '',
-    numeros_rifa: numerosRifa,
     estado_pago: estado_pago,
     created_at: timestamp
   };
@@ -173,16 +120,6 @@ export const savePedido = async ({ cliente_nombre, cantidad, direccion = '', tel
       } else {
         savedInSupabase = true;
         newPedido.id = data.id;
-
-        // Registrar cada número en rifa_numeros
-        if (numerosRifa.length > 0) {
-          const rifaRows = numerosRifa.map(num => ({
-            numero: num,
-            pedido_id: data.id,
-            cliente_nombre: newPedido.cliente_nombre
-          }));
-          await client.from('rifa_numeros').insert(rifaRows);
-        }
       }
     } catch (err) {
       console.error('Error al guardar en Supabase:', err);
@@ -200,8 +137,7 @@ export const savePedido = async ({ cliente_nombre, cantidad, direccion = '', tel
   return {
     success: true,
     pedido: newPedido,
-    savedInSupabase,
-    numerosRifa: newPedido.numeros_rifa
+    savedInSupabase
   };
 };
 
