@@ -35,6 +35,10 @@ jobs:
 
       - name: Build static site
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://slwuxsvcrhhgrbvyvscp.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsd3V4c3ZjcmhoZ3Jidnl2c2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODM1MjEsImV4cCI6MjEwNzU1OTUyMX0.QDONstq2lPhvCjqCFKI4sqbUliVYfFz0rnZ47JZMZT4' }}
+
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

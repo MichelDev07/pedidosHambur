@@ -7,6 +7,10 @@ const STORAGE_KEYS = {
   PEDIDOS_LOCAL: 'solidaria_pedidos_cache'
 };
 
+// Credenciales oficiales de Supabase para la Hamburgueseada Solidaria
+const DEFAULT_SUPABASE_URL = 'https://slwuxsvcrhhgrbvyvscp.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNsd3V4c3ZjcmhoZ3Jidnl2c2NwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODM1MjEsImV4cCI6MjEwNzU1OTUyMX0.QDONstq2lPhvCjqCFKI4sqbUliVYfFz0rnZ47JZMZT4';
+
 export const getActiveCredentials = () => {
   const envUrl = import.meta.env.VITE_SUPABASE_URL;
   const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -14,16 +18,22 @@ export const getActiveCredentials = () => {
   const localUrl = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL);
   const localKey = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY);
 
-  const url = (envUrl && envUrl.startsWith('http')) ? envUrl : (localUrl || '');
-  const key = (envKey && envKey.length > 20) ? envKey : (localKey || '');
+  // Conecta automáticamente en cualquier dispositivo móvil o computadora
+  const url = (localUrl && localUrl.startsWith('http')) 
+    ? localUrl 
+    : ((envUrl && envUrl.startsWith('http')) ? envUrl : DEFAULT_SUPABASE_URL);
+
+  const key = (localKey && localKey.length > 20) 
+    ? localKey 
+    : ((envKey && envKey.length > 20) ? envKey : DEFAULT_SUPABASE_KEY);
 
   return {
     url,
     key,
-    isFromEnv: Boolean(envUrl && envKey),
     isConfigured: Boolean(url && key && url.startsWith('http') && key.length > 20)
   };
 };
+
 
 let cachedClient = null;
 let currentClientKey = '';
