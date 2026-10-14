@@ -24,8 +24,12 @@ CREATE TABLE IF NOT EXISTS public.pedidos (
   direccion TEXT DEFAULT '',
   telefono TEXT DEFAULT '',
   estado_pago TEXT NOT NULL DEFAULT 'pendiente', -- 'pendiente' o 'pagado'
+  entregado BOOLEAN NOT NULL DEFAULT false, -- Check de Pedido Entregado
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Si la tabla ya fue creada previamente, agrega la columna automáticamente
+ALTER TABLE public.pedidos ADD COLUMN IF NOT EXISTS entregado BOOLEAN NOT NULL DEFAULT false;
 
 -- Habilitar Seguridad por Fila (Row Level Security - RLS)
 ALTER TABLE public.pedidos ENABLE ROW LEVEL SECURITY;

@@ -102,6 +102,7 @@ export const savePedido = async ({ cliente_nombre, cantidad, direccion = '', tel
     direccion: direccion ? direccion.trim() : '',
     telefono: telefono ? telefono.trim() : '',
     estado_pago: estado_pago,
+    entregado: false, // Pedido nuevo comienza sin entregar
     created_at: timestamp
   };
 
@@ -161,8 +162,13 @@ export const fetchPedidos = async () => {
     }
 
     if (data) {
-      saveLocalPedidos(data);
-      return { pedidos: data, isSupabase: true };
+      // Asegurar que cada pedido tenga el campo booleano entregado
+      const normalizados = data.map(p => ({
+        ...p,
+        entregado: Boolean(p.entregado)
+      }));
+      saveLocalPedidos(normalizados);
+      return { pedidos: normalizados, isSupabase: true };
     }
   } catch (err) {
     console.warn('Fallo de red Supabase:', err);
@@ -171,6 +177,7 @@ export const fetchPedidos = async () => {
   return { pedidos: localPedidos, isSupabase: false };
 };
 
+// Actualizar estado de pago
 export const updatePedidoPago = async (id, nuevoEstadoPago) => {
   const client = getSupabaseClient();
   const localPedidos = getLocalPedidos();
@@ -182,6 +189,23 @@ export const updatePedidoPago = async (id, nuevoEstadoPago) => {
       await client.from('pedidos').update({ estado_pago: nuevoEstadoPago }).eq('id', id);
     } catch (e) {
       console.error('Error actualizando pago en Supabase:', e);
+    }
+  }
+  return true;
+};
+
+// Actualizar estado de entrega (Check de pedido entregado)
+export const updatePedidoEntrega = async (id, nuevoEstadoEntregado) => {
+  const client = getSupabaseClient();
+  const localPedidos = getLocalPedidos();
+  const updated = localPedidos.map(p => p.id === id ? { ...p, entregado: nuevoEstadoEntregado } : p);
+  saveLocalPedidos(updated);
+
+  if (client) {
+    try {
+      await client.from('pedidos').update({ entregado: nuevoEstadoEntregado }).eq('id', id);
+    } catch (e) {
+      console.error('Error actualizando entrega en Supabase:', e);
     }
   }
   return true;
@@ -206,7 +230,11 @@ export const deletePedido = async (id) => {
 export const getLocalPedidos = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PEDIDOS_LOCAL);
-    return raw ? JSON.parse(raw) : [];
+    const parsed = raw ? JSON.parse(raw) : [];
+    return parsed.map(p => ({
+      ...p,
+      entregado: Boolean(p.entregado)
+    }));
   } catch (e) {
     return [];
   }

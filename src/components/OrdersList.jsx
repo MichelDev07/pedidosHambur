@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Users, 
   DollarSign, 
   Search, 
   Download, 
@@ -9,7 +8,11 @@ import {
   Trash2, 
   MapPin,
   CheckCircle2,
-  Clock
+  Clock,
+  Check,
+  RotateCcw,
+  PackageCheck,
+  Package
 } from 'lucide-react';
 import { PRECIO_HAMBURGUESA_GS } from '../data/initialData';
 
@@ -17,31 +20,43 @@ export const OrdersList = ({
   pedidos, 
   onRefresh, 
   onUpdatePayment, 
+  onUpdateEntrega,
   onDeletePedido,
   isSupabase 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPayment, setFilterPayment] = useState('todos');
+  const [activeTab, setActiveTab] = useState('pendientes'); // 'pendientes' | 'entregados'
+
+  // Separar en dos listas: Por entregar vs Entregados
+  const pedidosPendientes = pedidos.filter(p => !p.entregado);
+  const pedidosEntregados = pedidos.filter(p => p.entregado);
 
   // Totales
   const totalHamburguesas = pedidos.reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
+  const hamburguesasPorEntregar = pedidosPendientes.reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
+  const hamburguesasEntregadas = pedidosEntregados.reduce((acc, p) => acc + Number(p.cantidad || 0), 0);
+
   const totalRecaudadoGs = pedidos.reduce((acc, p) => acc + Number(p.total || 0), 0);
   const totalPagadoGs = pedidos
     .filter(p => p.estado_pago === 'pagado')
     .reduce((acc, p) => acc + Number(p.total || 0), 0);
-  const totalPendienteGs = totalRecaudadoGs - totalPagadoGs;
+  const totalPendienteCobroGs = totalRecaudadoGs - totalPagadoGs;
 
-  // Filtro
-  const filteredPedidos = pedidos.filter(p => {
-    const matchesFilter = filterPayment === 'todos' || p.estado_pago === filterPayment;
+  // Lista activa según la pestaña
+  const currentList = activeTab === 'pendientes' ? pedidosPendientes : pedidosEntregados;
+
+  // Filtrado por buscador y estado de pago
+  const filteredList = currentList.filter(p => {
+    const matchesPayment = filterPayment === 'todos' || p.estado_pago === filterPayment;
     const term = searchTerm.toLowerCase().trim();
-    if (!term) return matchesFilter;
+    if (!term) return matchesPayment;
 
     const matchesName = (p.cliente_nombre || '').toLowerCase().includes(term);
     const matchesAddress = (p.direccion || '').toLowerCase().includes(term);
     const matchesPhone = (p.telefono || '').includes(term);
 
-    return matchesFilter && (matchesName || matchesAddress || matchesPhone);
+    return matchesPayment && (matchesName || matchesAddress || matchesPhone);
   });
 
   // Exportar a CSV
@@ -51,7 +66,7 @@ export const OrdersList = ({
       return;
     }
 
-    const headers = ['Cliente', 'Cantidad', 'Precio Unitario Gs', 'Total Gs', 'Direccion', 'Telefono', 'Estado Pago', 'Fecha'];
+    const headers = ['Cliente', 'Cantidad', 'Precio Unitario Gs', 'Total Gs', 'Direccion', 'Telefono', 'Estado Pago', 'Entregado', 'Fecha'];
     const rows = pedidos.map(p => [
       `"${(p.cliente_nombre || '').replace(/"/g, '""')}"`,
       p.cantidad || 1,
@@ -60,6 +75,7 @@ export const OrdersList = ({
       `"${(p.direccion || '').replace(/"/g, '""')}"`,
       `"${p.telefono || ''}"`,
       `"${p.estado_pago || 'pendiente'}"`,
+      p.entregado ? '"Si"' : '"No"',
       `"${p.created_at || ''}"`
     ]);
 
@@ -76,13 +92,15 @@ export const OrdersList = ({
   // Enviar mensaje por WhatsApp
   const sendWhatsApp = (p) => {
     const phone = (p.telefono || '').replace(/\D/g, '');
+    const estadoEntregaTexto = p.entregado ? '✅ Pedido Entregado' : '⏳ En preparación / Por entregar';
     const msg = `*¡Hola ${p.cliente_nombre}! 🍔*
-Confirmamos tu pedido para la *Hamburgueseada Solidaria*:
+Detalle de tu pedido para la *Hamburgueseada Solidaria*:
 • Cantidad: ${p.cantidad} hamburguesa(s)
 • Total: ${Number(p.total).toLocaleString('es-PY')} Gs.
-• Estado: ${p.estado_pago === 'pagado' ? '✅ Ya Pagado' : '⏳ Pendiente de cobro'}
+• Pago: ${p.estado_pago === 'pagado' ? '✅ Ya Pagado' : '⏳ Pendiente de cobro'}
+• Entrega: ${estadoEntregaTexto}
 ${p.direccion ? `• Dirección: ${p.direccion}\n` : ''}
-¡Muchas gracias por colaborar con la hamburgueseada solidaria! 🙌`;
+¡Muchas gracias por colaborar con la causa solidaria! 🙌`;
 
     const url = phone 
       ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
@@ -100,7 +118,27 @@ ${p.direccion ? `• Dirección: ${p.direccion}\n` : ''}
           </div>
           <div className="stat-info">
             <h4>{totalHamburguesas}</h4>
-            <p>Hamburguesas Pedidas</p>
+            <p>Total Hamburguesas Pedidas</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon amber" style={{ background: 'rgba(234, 88, 12, 0.15)', color: 'var(--orange-fire)' }}>
+            <Package size={24} />
+          </div>
+          <div className="stat-info">
+            <h4>{hamburguesasPorEntregar}</h4>
+            <p>Por Entregar ({pedidosPendientes.length} pedidos)</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon green">
+            <PackageCheck size={24} color="var(--green-light)" />
+          </div>
+          <div className="stat-info">
+            <h4>{hamburguesasEntregadas}</h4>
+            <p>Ya Entregadas ({pedidosEntregados.length} pedidos)</p>
           </div>
         </div>
 
@@ -110,40 +148,55 @@ ${p.direccion ? `• Dirección: ${p.direccion}\n` : ''}
           </div>
           <div className="stat-info">
             <h4>{totalRecaudadoGs.toLocaleString('es-PY')} Gs.</h4>
-            <p>Total General Recaudado</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon green">
-            <CheckCircle2 size={24} color="var(--green-light)" />
-          </div>
-          <div className="stat-info">
-            <h4>{totalPagadoGs.toLocaleString('es-PY')} Gs.</h4>
-            <p>Cobrado Efectivo</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon amber">
-            <Clock size={24} color="var(--amber-light)" />
-          </div>
-          <div className="stat-info">
-            <h4>{totalPendienteGs.toLocaleString('es-PY')} Gs.</h4>
-            <p>Pendiente de Cobro</p>
+            <p>Total ({totalPagadoGs.toLocaleString('es-PY')} Gs. cobrado)</p>
           </div>
         </div>
       </div>
 
+      {/* Pestañas Principales: Por Entregar vs Entregados */}
+      <div className="orders-tabs-container">
+        <button
+          className={`orders-tab-btn ${activeTab === 'pendientes' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pendientes')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Clock size={18} />
+            <span>Por Entregar</span>
+            <span className="orders-tab-badge amber">
+              {pedidosPendientes.length}
+            </span>
+          </div>
+          <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+            {hamburguesasPorEntregar} hamburguesas pendientes
+          </div>
+        </button>
+
+        <button
+          className={`orders-tab-btn ${activeTab === 'entregados' ? 'active' : ''}`}
+          onClick={() => setActiveTab('entregados')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <CheckCircle2 size={18} />
+            <span>Pedidos Entregados</span>
+            <span className="orders-tab-badge green">
+              {pedidosEntregados.length}
+            </span>
+          </div>
+          <div style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+            {hamburguesasEntregadas} hamburguesas entregadas
+          </div>
+        </button>
+      </div>
+
       {/* Barra de Filtros y Búsqueda */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div style={{ position: 'relative', minWidth: '280px', flexGrow: 1 }}>
           <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text"
             className="form-input"
             style={{ paddingLeft: '2.4rem' }}
-            placeholder="Buscar por nombre o dirección..."
+            placeholder={`Buscar en ${activeTab === 'pendientes' ? 'pedidos por entregar' : 'pedidos entregados'}...`}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -176,16 +229,29 @@ ${p.direccion ? `• Dirección: ${p.direccion}\n` : ''}
         </div>
       </div>
 
-      {/* Tabla de Pedidos */}
+      {/* Tabla de la Lista Activa */}
       <div className="table-responsive">
-        {filteredPedidos.length === 0 ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-            No hay pedidos registrados con los filtros seleccionados.
+        {filteredList.length === 0 ? (
+          <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
+              {activeTab === 'pendientes' ? '🎉' : '📦'}
+            </div>
+            <p style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>
+              {activeTab === 'pendientes' 
+                ? '¡No hay pedidos pendientes de entrega!' 
+                : 'Aún no se ha marcado ningún pedido como entregado.'}
+            </p>
+            <p style={{ fontSize: '0.85rem', marginTop: '0.25rem' }}>
+              {activeTab === 'pendientes'
+                ? 'Todos los pedidos registrados hasta el momento ya fueron entregados.'
+                : 'Marcá el check de "Entregado" en la pestaña de pedidos pendientes para moverlos aquí.'}
+            </p>
           </div>
         ) : (
           <table className="admin-table">
             <thead>
               <tr>
+                <th style={{ width: '130px' }}>Estado Entrega</th>
                 <th>Cliente / Nombre</th>
                 <th>Cantidad</th>
                 <th>Total (Gs.)</th>
@@ -195,8 +261,31 @@ ${p.direccion ? `• Dirección: ${p.direccion}\n` : ''}
               </tr>
             </thead>
             <tbody>
-              {filteredPedidos.map((p) => (
-                <tr key={p.id}>
+              {filteredList.map((p) => (
+                <tr key={p.id} className={p.entregado ? 'row-delivered' : ''}>
+                  {/* Botón / Check de Entrega */}
+                  <td>
+                    {p.entregado ? (
+                      <button
+                        onClick={() => onUpdateEntrega(p.id, false)}
+                        className="delivery-check-btn delivered"
+                        title="Hacé clic para volver este pedido a la lista de pendientes"
+                      >
+                        <Check size={14} />
+                        <span>Entregado</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onUpdateEntrega(p.id, true)}
+                        className="delivery-check-btn pending"
+                        title="Marcar como entregado y mover a la lista de entregados"
+                      >
+                        <Check size={14} />
+                        <span>Entregar</span>
+                      </button>
+                    )}
+                  </td>
+
                   {/* Nombre y teléfono */}
                   <td>
                     <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{p.cliente_nombre}</div>
@@ -253,7 +342,7 @@ ${p.direccion ? `• Dirección: ${p.direccion}\n` : ''}
                         alignItems: 'center',
                         gap: '0.35rem'
                       }}
-                      title="Hacé clic para cambiar estado"
+                      title="Hacé clic para cambiar estado de pago"
                     >
                       {p.estado_pago === 'pagado' ? '✅ Ya Pagó' : '⏳ Pendiente'}
                     </button>

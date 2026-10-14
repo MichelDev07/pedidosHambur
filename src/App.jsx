@@ -8,6 +8,7 @@ import {
   fetchPedidos, 
   savePedido, 
   updatePedidoPago,
+  updatePedidoEntrega,
   deletePedido,
   getActiveCredentials 
 } from './supabase';
@@ -54,6 +55,12 @@ export function App() {
     await loadData();
   };
 
+  // Cambiar entrega (Check de entregado)
+  const handleUpdateEntrega = async (id, nuevoEstadoEntregado) => {
+    await updatePedidoEntrega(id, nuevoEstadoEntregado);
+    await loadData();
+  };
+
   // Eliminar pedido
   const handleDeletePedido = async (id) => {
     await deletePedido(id);
@@ -87,11 +94,12 @@ export function App() {
           isSubmitting={isSubmitting} 
         />
 
-        {/* Listado de Pedidos, Métricas y Sorteador */}
+        {/* Listado de Pedidos con Pestañas de Por Entregar y Entregados */}
         <OrdersList 
           pedidos={pedidos}
           onRefresh={loadData}
           onUpdatePayment={handleUpdatePayment}
+          onUpdateEntrega={handleUpdateEntrega}
           onDeletePedido={handleDeletePedido}
           isSupabase={isSupabase}
         />
@@ -100,14 +108,14 @@ export function App() {
       {/* Footer */}
       <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '2rem 1.5rem', textAlign: 'center', background: 'rgba(0,0,0,0.3)', marginTop: '3rem' }}>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-          🍔 Rifa Solidaria de Hamburguesas • {PRECIO_HAMBURGUESA_GS.toLocaleString('es-PY')} Gs. por pedido
+          🍔 Hamburgueseada Solidaria • {PRECIO_HAMBURGUESA_GS.toLocaleString('es-PY')} Gs. por pedido
         </p>
         <p style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginTop: '0.35rem' }}>
           Página web 100% estática desplegable en Pages y conectada con Supabase
         </p>
       </footer>
 
-      {/* Modal de Ticket con números de rifa */}
+      {/* Modal de Comprobante tras registrar */}
       <OrderTicketModal 
         isOpen={isTicketOpen}
         onClose={() => setIsTicketOpen(false)}
