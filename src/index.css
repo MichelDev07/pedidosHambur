@@ -1304,3 +1304,48 @@ body {
   cursor: pointer;
   font-size: 0.75rem;
 }
+
+/* ========================================================
+   FORMULARIO PRINCIPAL DE CARGA DE PEDIDOS
+   ======================================================== */
+.order-form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-amber);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow-md), 0 0 25px rgba(245, 158, 11, 0.08);
+}
+
+.order-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.15rem;
+}
+
+@media (max-width: 640px) {
+  .order-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .order-form-grid .form-group {
+    grid-column: span 1 !important;
+  }
+}
+
+.order-form-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 1.25rem;
+}
+
+.orders-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
